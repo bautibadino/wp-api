@@ -1,14 +1,48 @@
-# Dockerfile optimizado para Render (GRATIS)
+# Dockerfile simple y funcional para Render
 FROM node:18-slim
 
-# Instalar dependencias del sistema necesarias para Puppeteer
-RUN apt-get update \
-    && apt-get install -y wget gnupg \
-    && wget -q -O - https://dl-ssl.google.com/linux/linux_signing_key.pub | apt-key add - \
+# Instalar dependencias del sistema para Puppeteer
+RUN apt-get update && apt-get install -y \
+    wget \
+    gnupg \
+    ca-certificates \
+    procps \
+    libxss1 \
+    libgconf-2-4 \
+    libxrandr2 \
+    libasound2 \
+    libpangocairo-1.0-0 \
+    libatk1.0-0 \
+    libcairo-gobject2 \
+    libgtk-3-0 \
+    libgdk-pixbuf2.0-0 \
+    libxcomposite1 \
+    libxcursor1 \
+    libxdamage1 \
+    libxext6 \
+    libxfixes3 \
+    libxi6 \
+    libxrender1 \
+    libxtst6 \
+    libglib2.0-0 \
+    libnss3 \
+    libxss1 \
+    fonts-liberation \
+    libappindicator1 \
+    libasound2 \
+    libatk-bridge2.0-0 \
+    libdrm2 \
+    libgtk-3-0 \
+    libnspr4 \
+    libxrandr2 \
+    xdg-utils \
+    && rm -rf /var/lib/apt/lists/*
+
+# Instalar Chrome
+RUN wget -q -O - https://dl-ssl.google.com/linux/linux_signing_key.pub | apt-key add - \
     && sh -c 'echo "deb [arch=amd64] http://dl.google.com/linux/chrome/deb/ stable main" >> /etc/apt/sources.list.d/google.list' \
     && apt-get update \
-    && apt-get install -y google-chrome-stable fonts-ipafont-gothic fonts-wqy-zenhei fonts-thai-tlwg fonts-kacst fonts-freefont-ttf libxss1 \
-      --no-install-recommends \
+    && apt-get install -y google-chrome-stable \
     && rm -rf /var/lib/apt/lists/*
 
 # Crear directorio de trabajo
@@ -20,13 +54,13 @@ RUN groupadd -r pptruser && useradd -r -g pptruser -G audio,video pptruser \
     && chown -R pptruser:pptruser /home/pptruser \
     && chown -R pptruser:pptruser /app
 
-# Copiar package.json y package-lock.json
+# Copiar archivos de dependencias
 COPY package*.json ./
 
-# Instalar dependencias de Node.js
-RUN npm ci --only=production && npm cache clean --force
+# Instalar dependencias (método simple)
+RUN npm install --production && npm cache clean --force
 
-# Copiar código fuente
+# Copiar el resto del código
 COPY . .
 
 # Crear directorios necesarios
@@ -37,9 +71,10 @@ RUN mkdir -p /app/whatsapp-session && \
 # Cambiar a usuario no-root
 USER pptruser
 
-# Configurar variables de entorno para Puppeteer
+# Variables de entorno
 ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true
 ENV PUPPETEER_EXECUTABLE_PATH=/usr/bin/google-chrome-stable
+ENV NODE_ENV=production
 
 # Exponer puerto
 EXPOSE 10000
